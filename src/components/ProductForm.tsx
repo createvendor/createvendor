@@ -12,7 +12,8 @@ import { toast } from 'react-hot-toast';
 interface ProductFormProps {
   productId?: string;
   storeId?: string;
-  onClose: () => void;
+  isEdit?: boolean;
+  onClose?: () => void;
   onSave?: (product: any) => void;
 }
 
