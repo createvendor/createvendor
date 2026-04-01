@@ -1,0 +1,212 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper Functions ─────────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    function getStore(storeId) {
+      return get(/databases/$(database)/documents/stores/$(storeId)).data;
+    }
+    function isSuperAdmin() {
+      return isSignedIn() && request.auth.token.email == 'bishalmishra9000@gmail.com';
+    }
+    function isStoreOwner(storeId) {
+      return (isSignedIn() && getStore(storeId).ownerId == request.auth.uid) || isSuperAdmin();
+    }
+
+    // ─── Users ────────────────────────────────────────────────────────────────
+    match /users/{userId} {
+      // ⚠️ DEVELOPMENT MODE: Allowing read/write for setup. 
+      // We will tighten this with the Admin SDK later.
+      allow read, write: if true; 
+    }
+
+    // ─── Stores ───────────────────────────────────────────────────────────────
+    match /stores/{storeId} {
+      allow read, write: if true;
+    }
+
+    // ─── Products ─────────────────────────────────────────────────────────────
+    match /products/{productId} {
+      // ⚠️ DEVELOPMENT MODE: Allowing read/write for setup. 
+      allow read, write: if true;
+    }
+
+    // ─── Orders ───────────────────────────────────────────────────────────────
+    match /orders/{orderId} {
+      // ⚠️ DEVELOPMENT MODE: Allowing read/write for setup. 
+      allow read, write: if true;
+    }
+
+    // ─── Categories ───────────────────────────────────────────────────────────
+    match /categories/{categoryId} {
+      // ⚠️ DEVELOPMENT MODE: Allowing read/write for setup. 
+      allow read, write: if true;
+    }
+
+    // ─── Brands ───────────────────────────────────────────────────────────────
+    match /brands/{brandId} {
+      // ⚠️ DEVELOPMENT MODE: Allowing read/write for setup. 
+      allow read, write: if true;
+    }
+
+    // ─── Product Features / Attributes ────────────────────────────────────────
+    match /productFeatures/{featureId} {
+      allow read:   if true;
+      allow create: if isSignedIn() && isStoreOwner(request.resource.data.storeId);
+      allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow delete: if isSignedIn() && isStoreOwner(resource.data.storeId);
+    }
+
+    // ─── Reviews ──────────────────────────────────────────────────────────────
+    match /reviews/{reviewId} {
+      allow read:   if resource.data.isApproved == true || isStoreOwner(resource.data.storeId);
+      allow create: if true;
+      allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow delete: if isSignedIn() && isStoreOwner(resource.data.storeId);
+    }
+
+    // ─── Promocodes ───────────────────────────────────────────────────────────
+    match /promocodes/{codeId} {
+      allow read:   if true;
+      allow create: if isSignedIn() && isStoreOwner(request.resource.data.storeId);
+      allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow delete: if isSignedIn() && isStoreOwner(resource.data.storeId);
+    }
+
+    // ─── Promotional Offers ───────────────────────────────────────────────────
+    match /promotionalOffers/{offerId} {
+      allow read:   if true;
+      allow create: if isSignedIn() && isStoreOwner(request.resource.data.storeId);
+      allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow delete: if isSignedIn() && isStoreOwner(resource.data.storeId);
+    }
+
+    // ─── Notifications ────────────────────────────────────────────────────────
+    match /notifications/{notifId} {
+      allow read:   if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow create: if isSignedIn() && isStoreOwner(request.resource.data.storeId);
+      allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow delete: if isSignedIn() && isStoreOwner(resource.data.storeId);
+    }
+
+    // ─── Delivery Prices ──────────────────────────────────────────────────────
+    match /deliveryPrices/{priceId} {
+      allow read:   if true;
+      allow create: if isSignedIn() && isStoreOwner(request.resource.data.storeId);
+      allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow delete: if isSignedIn() && isStoreOwner(resource.data.storeId);
+    }
+
+    // ─── Custom Delivery Zones ────────────────────────────────────────────────
+    match /customDeliveryZones/{zoneId} {
+      allow read:   if true;
+      allow create: if isSignedIn() && isStoreOwner(request.resource.data.storeId);
+      allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow delete: if isSignedIn() && isStoreOwner(resource.data.storeId);
+    }
+
+    // ─── Delivery Partners ────────────────────────────────────────────────────
+    match /deliveryPartners/{partnerId} {
+      allow read:   if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow create: if isSignedIn() && isStoreOwner(request.resource.data.storeId);
+      allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow delete: if isSignedIn() && isStoreOwner(resource.data.storeId);
+    }
+
+    // ─── Installation Presets ─────────────────────────────────────────────────
+    match /installationPresets/{presetId} {
+      allow read:   if true;
+      allow create: if isSignedIn() && isStoreOwner(request.resource.data.storeId);
+      allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow delete: if isSignedIn() && isStoreOwner(resource.data.storeId);
+    }
+
+    // ─── Contact Messages ─────────────────────────────────────────────────────
+    match /contactMessages/{msgId} {
+      allow create: if true;
+      allow read:   if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow delete: if isSignedIn() && isStoreOwner(resource.data.storeId);
+    }
+
+    // ─── Store Content (Pages: privacy, terms, footer etc.) ───────────────────
+    match /storeContent/{contentId} {
+      allow read:   if true;
+      allow create: if isSignedIn() && isStoreOwner(request.resource.data.storeId);
+      allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow delete: if isSignedIn() && isStoreOwner(resource.data.storeId);
+    }
+
+    // ─── Affiliates ───────────────────────────────────────────────────────────
+    match /affiliates/{affiliateId} {
+      allow read:   if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow create: if isSignedIn() && isStoreOwner(request.resource.data.storeId);
+      allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow delete: if isSignedIn() && isStoreOwner(resource.data.storeId);
+    }
+
+    // ─── Branches / Locations ─────────────────────────────────────────────────
+    match /branches/{branchId} {
+      allow read:   if true;
+      allow create: if isSignedIn() && isStoreOwner(request.resource.data.storeId);
+      allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow delete: if isSignedIn() && isStoreOwner(resource.data.storeId);
+    }
+
+    // ─── Blog Posts ───────────────────────────────────────────────────────────
+    match /blogPosts/{postId} {
+      allow read:   if true;
+      allow create: if isSignedIn() && isStoreOwner(request.resource.data.storeId);
+      allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow delete: if isSignedIn() && isStoreOwner(resource.data.storeId);
+    }
+
+    // ─── FAQs ─────────────────────────────────────────────────────────────────
+    match /faqs/{faqId} {
+      allow read:   if true;
+      allow create: if isSignedIn() && isStoreOwner(request.resource.data.storeId);
+      allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow delete: if isSignedIn() && isStoreOwner(resource.data.storeId);
+    }
+
+
+    // ─── Store Managers ───────────────────────────────────────────────────────
+    match /storeManagers/{managerId} {
+      allow read:   if isSignedIn() && (
+        isStoreOwner(resource.data.storeId) ||
+        resource.data.email == request.auth.token.email
+      );
+      allow create: if isSignedIn() && isStoreOwner(request.resource.data.storeId);
+      allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow delete: if isSignedIn() && isStoreOwner(resource.data.storeId);
+    }
+
+    // ─── Dropshipping Products ────────────────────────────────────────────────
+    match /dropshippingProducts/{productId} {
+      allow read:   if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow create: if isSignedIn() && isStoreOwner(request.resource.data.storeId);
+      allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow delete: if isSignedIn() && isStoreOwner(resource.data.storeId);
+    }
+
+    // ─── Email Preferences ───────────────────────────────────────────────────
+    match /emailPreferences/{storeId} {
+      allow read, write: if isSignedIn() && isStoreOwner(storeId);
+    }
+
+    // ─── Page Views (Traffic Analytics) ───────────────────────────────────────
+    match /page_views/{viewId} {
+      // Anyone can create a page view (public visitors)
+      allow create: if true;
+      // Only the store owner can read/update/delete their store's views
+      allow read, update, delete: if isSignedIn() && isStoreOwner(resource.data.storeId);
+    }
+  }
+}
+
